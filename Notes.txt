@@ -1,0 +1,2 @@
+Starting version control with GIT by copying TDS_GUI_v12.m and .fig to this current folder.
+Renamed TDS_GUI_v12.m and .fig 'TDS_GUI.m' and '.fig'
