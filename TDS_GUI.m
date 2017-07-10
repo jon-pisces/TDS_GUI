@@ -1,19 +1,19 @@
-function varargout = TDS_GUI_v12(varargin)
-% TDS_GUI_v12 MATLAB code for TDS_GUI_v12.fig
-%      TDS_GUI_v12, by itself, creates a new TDS_GUI_v12 or raises the existing
+function varargout = TDS_GUI(varargin)
+% TDS_GUI MATLAB code for TDS_GUI.fig
+%      TDS_GUI, by itself, creates a new TDS_GUI or raises the existing
 %      singleton*.
 %
-%      H = TDS_GUI_v12 returns the handle to a new TDS_GUI_v12 or the handle to
+%      H = TDS_GUI returns the handle to a new TDS_GUI or the handle to
 %      the existing singleton*.
 %
-%      TDS_GUI_v12('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in TDS_GUI_v12.M with the given input arguments.
+%      TDS_GUI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in TDS_GUI.M with the given input arguments.
 %
-%      TDS_GUI_v12('Property','Value',...) creates a new TDS_GUI_v12 or raises the
+%      TDS_GUI('Property','Value',...) creates a new TDS_GUI or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before TDS_GUI_v12_OpeningFcn gets called.  An
+%      applied to the GUI before TDS_GUI_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to TDS_GUI_v12_OpeningFcn via varargin.
+%      stop.  All inputs are passed to TDS_GUI_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
@@ -26,8 +26,8 @@ function varargout = TDS_GUI_v12(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @TDS_GUI_v12_OpeningFcn, ...
-                   'gui_OutputFcn',  @TDS_GUI_v12_OutputFcn, ...
+                   'gui_OpeningFcn', @TDS_GUI_OpeningFcn, ...
+                   'gui_OutputFcn',  @TDS_GUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -45,19 +45,19 @@ end
 %  =========================== Initialization =============================
 %  ========================================================================
 
-% --- Executes just before TDS_GUI_v12 is made visible.
-function TDS_GUI_v12_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before TDS_GUI is made visible.
+function TDS_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to TDS_GUI_v12 (see VARARGIN)
+% varargin   command line arguments to TDS_GUI (see VARARGIN)
 
 global axFit
 global axBck
 global axFnl
 
-% Choose default command line output for TDS_GUI_v12
+% Choose default command line output for TDS_GUI
 handles.output = hObject;
 
 % Update handles structure
@@ -115,10 +115,10 @@ set(handles.checkbox_HDfluxSRS,'enable','off');
 
 
 
-% UIWAIT makes TDS_GUI_v12 wait for user response (see UIRESUME)
+% UIWAIT makes TDS_GUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
-function varargout = TDS_GUI_v12_OutputFcn(hObject, eventdata, handles) 
+function varargout = TDS_GUI_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -378,8 +378,19 @@ set(handles.pushbutton_Imp_Temp,'enable','off');
 set(handles.checkbox_Temp_Data, 'Value',1);
 set(handles.pushbutton_TempTime,'enable','on');
 
-filePathMKS = get(handles.edit_Path_MKS,'String');
-data = read_MKS_data(filePathMKS);
+fileName = get(handles.edit_Path_MKS,'String');
+
+if     get(handles.radiobutton_TDS_A,'Value')
+       TDS_AorB = 'TDS_A';
+elseif get(handles.radiobutton_TDS_B,'Value')
+       TDS_AorB = 'TDS_B';
+end
+
+if     strcmp(TDS_AorB,'TDS_A')
+        data = read_MKS_data_A(fileName);
+elseif strcmp(TDS_AorB,'TDS_B')
+        data = read_MKS_data_B(fileName);
+end
 
 mks_data.dtList = data.dateTime;          
 mks_data.temptr = data.temper_K;
@@ -424,7 +435,14 @@ massPeak.D2peak = str2double(get(handles.edit_D2pk_mks,'String'));
 massPeak.Hepeak = str2double(get(handles.edit_Hepk_mks,'String'));
 
 filePathMKS = get(handles.edit_Path_MKS,'String');
-mks_data = fit_MKS_data(filePathMKS,filter_,axFit,massPeak);
+
+if     get(handles.radiobutton_TDS_A,'Value')
+       TDS_AorB = 'TDS_A';
+elseif get(handles.radiobutton_TDS_B,'Value')
+       TDS_AorB = 'TDS_B';
+end
+
+mks_data = fit_MKS_data(filePathMKS,filter_,axFit,massPeak,TDS_AorB);
 
 plot_Log10_time(mks_data,'MKS Error',axFit);
 plot_Log10_time(mks_data,       'HD',axBck);
@@ -1252,7 +1270,7 @@ dlmwrite(fileName,Values, '-append','delimiter','\t','precision','%8.4e');
 %  ========================= Data Manipulation ============================
 %  ========================================================================
 
-function [ MKS ] =  fit_MKS_data(fileName,filter,axPlot,massPk)
+function [ MKS ] =  fit_MKS_data(fileName,filter,axPlot,massPk,TDS_AorB)
 % store_TDS_mks
 %   folderName : grab all the files inside this folder
 %   parse the time from the fileNames
@@ -1288,7 +1306,11 @@ nn = 6;                     % flattop span = 2*nn + 1
 
 %% Get the MKS File
 
-data = read_MKS_data(fileName);
+if     strcmp(TDS_AorB,'TDS_A')
+        data = read_MKS_data_A(fileName);
+elseif strcmp(TDS_AorB,'TDS_B')
+        data = read_MKS_data_B(fileName);
+end
 
 %% Define TDS storage vector
 nLength = length(data.dateTime);
@@ -1503,7 +1525,7 @@ for ii = nLength-2:nLength
     MKS.m_Wght(ii) = MKS.m_Wght(nLength-3);
 end
 
-function [ mks ] = read_MKS_data(fileName)
+function [ mks ] = read_MKS_data_A(fileName)
 %% UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 %%
@@ -1557,6 +1579,60 @@ mks.scanNumb = dataArray{:, 2};
 mks.partPres = cell2mat(dataArray(:,3:mLength+2));
 mks.temper_K = dataArray{:,end-1}+273.15;       % Ignore last column (MKS saves a blank column)
 
+function [ mks ] = read_MKS_data_B(fileName)
+%% UNTITLED3 Summary of this function goes here
+%   Detailed explanation goes here
+%%
+
+%% Initialize variables.
+% fileName = 'C:\Users\Michael\Desktop\GetTDS\WdimeC13_mks.txt';
+delimiter = '\t';
+% formatSpec = '%s%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%[^\n\r]';
+% formatSpec = '%s%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%f%[^\n\r]';
+
+%% Open the text file.
+fileID = fopen(fileName,'r');
+
+%% Read columns of data according to format string.
+% This call is based on the structure of the file used to generate this
+% code. If an error occurs for a different file, try regenerating the code
+% from the Import Tool.
+
+Header1 = fgets(fileID);
+Header1 = fgets(fileID);
+Header1 = fgets(fileID);
+Header1 = strsplit(Header1,'"\t"');
+hLength = length(Header1);
+formatSpec = '%s';
+for jj = 2:hLength
+    formatSpec = [formatSpec '%f'];
+end
+formatSpec = [formatSpec '%[^\n\r]'];
+
+dataArray = textscan(fileID, formatSpec,...
+                     'Delimiter', delimiter,...
+                     'TreatAsEmpty','Skipped',...
+                     'EmptyValue' ,NaN,...
+                     'ReturnOnError', false);
+
+%% Close the text file.
+fclose(fileID);
+
+%% 
+mLength = length(dataArray)-4;      
+masses1 = Header1(3:mLength+2);
+mks.massNumb = zeros(mLength,1);
+for ii = 1:mLength
+    mks.massNumb(ii) = str2double(masses1{ii}(6:end));
+end
+
+dateTime = dataArray{:, 1};
+dateTime = datenum(dateTime);
+mks.dateTime = (dateTime - dateTime(1))*86400;  % 24*60*60 = 86400 seconds/day
+mks.scanNumb = dataArray{:, 2};
+mks.partPres = cell2mat(dataArray(:,3:mLength+2));
+mks.temper_K = dataArray{:,end-3}+273.15;       % Ignore last 3 columns (MKS saves a blank column)
+                                                % May need to change "end-3" to "end-4" to get the correct temp
 function [ SRS ] =  fit_SRS_data(folderName,filter,axPlot,massPk)
 % store_TDS_srs
 %   folderName : grab all the files inside this folder
