@@ -1335,15 +1335,14 @@ mass0 = data.massNumb;
 delM  = mass0(2)-mass0(1);
 min0  = min(mass0);
 
-
-[mass0,i0] = sort(mass0);   % Ordering according to mass with i0 as the indices
-data.partPres = data.partPres(i0,:); % Reorders the partial press to match the mass order
-mass_0 = mass0;
-
 i_2 = find(mass0<(2+delPk) & mass0>(2-delPk));
 i_3 = find(mass0<(3+delPk) & mass0>(3-delPk));
 i_4 = find(mass0<(4+delPk) & mass0>(4-delPk));
 
+[mass0,i0] = sort(mass0);   % Ordering according to mass with i0 as the indices
+data.partPres2 = data.partPres(i0,:); % Reorders the partial press to match the mass order
+data.partPres = data.partPres2;
+mass_0 = mass0;
 %% Stretch mass axis to completely zoom in and expand all masses to range from 1.5 to 4.5
 mass_0(i_2) = 1.5 + 1/length(i_2)*(1:length(i_2));   % Span from 1.5 to 2.5
 mass_0(i_3) = 2.5 + 1/length(i_3)*(1:length(i_3));   % Span from 2.5 to 3.5
@@ -1371,15 +1370,8 @@ mass_0(i_4) = 3.5 + 1/length(i_4)*(1:length(i_4));   % Span from 3.5 to 4.5
 
 f2 = f2-nn-1:f2+nn;
 f3 = f3-nn-1:f3+nn;
-f_ = f_-nn-1:f_+nn;
 f4 = f4-nn-1:f4+nn;
-
-if f2(1) < 1
-    f2 = f2 + abs(f2(1))+ 1;        % shift by lowest negative value as well as zero (i.e. +1)
-end
-if f4(end)> length(mass_0)
-    f4 = f4 - abs(f4(end)-length(mass_0));
-end
+f_ = f_-nn-1:f_+nn;
 
 mass2 = mass_0(f2);
 mass3 = mass_0(f3);
@@ -1653,11 +1645,10 @@ mks.massNumb = zeros(length(Header1),1);
 for ii = 1:length(Header1)
    if strcmp(Header1{1,ii}(1:4),'Mass')
       mks.massNumb(ii) = str2double(Header1{1,ii}(6:end));
-   elseif strcmp(Header1{1,ii},'Temperature 1')
+   elseif strcmp(Header1{1,ii}(1:13),'Temperature 1')
        iTemp1 = ii;
-       iTemp2 = ii+1;
-%    elseif strcmp(Header1{1,ii},'Temperature 2"	')            % Not sure why there is a quote on end...
-%        iTemp2 = ii;
+   elseif strcmp(Header1{1,ii}(1:13),'Temperature 2')
+       iTemp2 = ii;
    end       
 end
 
@@ -1677,13 +1668,10 @@ mks.partPres = cell2mat(dataArray(:,iNumb));
 
 temperature1 = dataArray{:,iTemp1}+273.15;
 temperature2 = dataArray{:,iTemp2}+273.15;
+maxT
 
-if max(temperature1) > max(temperature2)
-    mks.temper_K = temperature1;
-else
-    mks.temper_K = temperature2;
-end
 
+mks.temper_K = dataArray{:,iTemp2}+273.15;      % Temperature might be in iTemp1
 
 function [ SRS ] =  fit_SRS_data(folderName,filter,axPlot,massPk)
 % store_TDS_srs
