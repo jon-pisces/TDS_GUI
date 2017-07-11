@@ -351,6 +351,12 @@ function         edit_LeakRate_Callback(hObject, eventdata, handles)
 
 % A Select File/Directory =================================================
 
+function radiobutton_TDS_A_Callback(hObject, eventdata, handles)
+ set(handles.radiobutton_TDS_B,'Value',0)
+
+function radiobutton_TDS_B_Callback(hObject, eventdata, handles)
+ set(handles.radiobutton_TDS_A,'Value',0)
+
 function         edit_Path_MKS_Callback(hObject, eventdata, handles)
 set(handles.pushbutton_Imp_Temp,'enable','on');
 set(handles.pushbutton_Fit__MKS,'enable','on');
@@ -418,6 +424,7 @@ global axFnl
 global mks_data
 global srs_data
 global srsFit
+global killFit
 
 set(handles.pushbutton_Fit__MKS,'enable','off');
 
@@ -443,6 +450,10 @@ elseif get(handles.radiobutton_TDS_B,'Value')
 end
 
 mks_data = fit_MKS_data(filePathMKS,filter_,axFit,massPeak,TDS_AorB);
+
+if killFit == 1
+    return
+end
 
 plot_Log10_time(mks_data,'MKS Error',axFit);
 plot_Log10_time(mks_data,       'HD',axBck);
@@ -495,6 +506,7 @@ global axFnl
 global mks_data
 global srs_data
 global srsFit
+global killFit
 
 srsFit = 1;
 
@@ -514,6 +526,10 @@ massPeak.D2peak = str2double(get(handles.edit_D2pk_srs,'String'));
 
 filePathSRS = get(handles.edit_Path_SRS,'String');
 srs_data = fit_SRS_data(filePathSRS,filter_,axFit,massPeak);
+
+if killFit == 1
+    return
+end
 
 plot_Log10_time(srs_data,'SRS Error',axFit);
 plot_Log10_time(srs_data,       'HD',axBck);
@@ -616,6 +632,11 @@ elseif get(handles.radiobutton_ChooseSRS,'Value')
 end
 
 plot_Log10_time(data,title_,axFit);
+
+function   pushbutton_kill_fit_Callback(hObject, eventdata, handles)
+global killFit
+
+killFit= 1;
 
 
 % C Choose signal to Scale to H2 ==========================================
@@ -1280,6 +1301,7 @@ function [ MKS ] =  fit_MKS_data(fileName,filter,axPlot,massPk,TDS_AorB)
 %   shifting mass spectra. Assuming a flattop, find the
 %   mean partial pressure spanning 2*nn+1 data points.
 %
+global killFit
 
 warning('off','all')
 
@@ -1349,39 +1371,27 @@ mass_0(i_2) = 1.5 + 1/length(i_2)*(1:length(i_2));   % Span from 1.5 to 2.5
 mass_0(i_3) = 2.5 + 1/length(i_3)*(1:length(i_3));   % Span from 2.5 to 3.5
 mass_0(i_4) = 3.5 + 1/length(i_4)*(1:length(i_4));   % Span from 3.5 to 4.5
 
-[~,f2] = min(abs(mass_0-m2Pk));
+[~,f2] = min(abs(mass_0-m2Pk));                     % find index that is closest to m2Pk
 [~,f3] = min(abs(mass_0-m3Pk));
 [~,f4] = min(abs(mass_0-m4Pk));
 [~,f_] = min(abs(mass_0-m_Pk));
 
-% f_min=f_-nn-1;
-% f3max=f3+nn;
-% 
-% if f_min<1
-%     f_min=1;
-% end
-% if f3max>length(mass_0)
-%     f3max=length(mass_0);
-% end
+f2 = f2-nn:f2+nn;                                   % Add 2*nn index values around m2Pk
+f3 = f3-nn:f3+nn;
+f_ = f_-nn:f_+nn;
+f4 = f4-nn:f4+nn;
 
-% f2 = f2-nn-1:f2+nn;
-% f3 = f3-nn-1:f3max;
-% f4 = f4-nn-1:f4+nn;
-% f_ = f_min:f_+nn;
+if2 = find( f2<=i_2(end) & f2>=i_2(1));             % Cutout index values that do not lie in mass2 window
+if3 = find( f3<=i_3(end) & f3>=i_3(1));  
+if_ = find( f_<=i_4(end) & f_>=i_4(1));  
+if4 = find( f4<=i_4(end) & f4>=i_4(1));  
 
-f2 = f2-nn-1:f2+nn;
-f3 = f3-nn-1:f3+nn;
-f_ = f_-nn-1:f_+nn;
-f4 = f4-nn-1:f4+nn;
+f2 = f2(if2);                         
+f3 = f3(if3);
+f_ = f_(if_);
+f4 = f4(if4);
 
-if f2(1) < 1
-    f2 = f2 + abs(f2(1))+ 1;        % shift by lowest negative value as well as zero (i.e. +1)
-end
-if f4(end)> length(mass_0)
-    f4 = f4 - abs(f4(end)-length(mass_0));
-end
-
-mass2 = mass_0(f2);
+mass2 = mass_0(f2);           % mass2 is zoomed in near the peak (may not be 2nn+1 length)
 mass3 = mass_0(f3);
 mass4 = mass_0(f4);
 mass_ = mass_0(f_);
@@ -1395,8 +1405,14 @@ opts.Upper = [ 0.0  3e1  1e1];
 
 %% Setup the correct plotting axes 
 axes(axPlot);
+killFit = 0;                                    % killFit used to exit the fitting for loop
 
 for ii = 4:nLength-3
+    
+    if killFit == 1
+        break
+    end
+    
     if strcmp(filter,'Gaussian')
         pPrs_3 = data.partPres(:,ii-3);
         pPrs_2 = data.partPres(:,ii-2);
@@ -1429,8 +1445,8 @@ for ii = 4:nLength-3
     pPrs3max  =  max(pPrs3);
     peakPres3 = mean(pPrs3);
     wghtPres3 =  std(pPrs3-peakPres3)/peakPres3;
-    if peakPres3 < minPres || wghtPres3 > minWght
-        plotPres3 =  ones(2*nn+2,1)*peakPres3;
+    if peakPres3 < minPres || wghtPres3 > minWght       % Decides how to fit when signal is below noise
+        plotPres3 =  ones(length(f3),1)*peakPres3;
     else
         [fit3, ~] =  fit(mass3-m3Pk,pPrs3/pPrs3max, ft, opts);
         pkMass3   = -fit3.p2/(2*fit3.p1);
@@ -1444,7 +1460,7 @@ for ii = 4:nLength-3
     peakPres4 = mean(pPrs4);
     wghtPres4 =  std(pPrs4-peakPres4)/peakPres4;
     if peakPres4 < minPres || wghtPres4 > minWght
-        plotPres4 =  ones(2*nn+2,1)*peakPres4;
+        plotPres4 =  ones(length(f4),1)*peakPres4;
     else
         [fit4, ~] =  fit(mass4-m4Pk,pPrs4/pPrs4max, ft, opts);
         if fit4.p1 < 0
@@ -1453,7 +1469,7 @@ for ii = 4:nLength-3
             peakPres4 =  fit4(pkMass4)*pPrs4max;
             wghtPres4 =  std(plotPres4-pPrs4)/peakPres4;
         else
-            plotPres4 =  ones(2*nn+2,1)*peakPres4;
+            plotPres4 =  ones(length(f4),1)*peakPres4;
         end
 
     end
@@ -1463,16 +1479,16 @@ for ii = 4:nLength-3
     peakPres_ = mean(pPrs_);
     wghtPres_ =  std(pPrs_-peakPres_)/peakPres_;
     if peakPres_ < minPres || wghtPres_ > minWght
-        plotPres_ =  ones(2*nn+2,1)*peakPres_;
+        plotPres_ =  ones(length(f_),1)*peakPres_;
     else
         [fit_, ~] =  fit(mass_-m_Pk,pPrs_/pPrs_max, ft, opts);
         if fit_.p1 < 0
             pkMass_   = -fit_.p2/(2*fit_.p1);
             plotPres_ =  fit_(mass_-m_Pk)*pPrs_max;
             peakPres_ =  fit_(pkMass_)*pPrs_max;
-            wghtPres_ =  std(plotPres4-pPrs_)/peakPres_;
+            wghtPres_ =  std(plotPres_-pPrs_)/peakPres_;
         else
-            plotPres_ =  ones(2*nn+2,1)*peakPres_;
+            plotPres_ =  ones(length(f_),1)*peakPres_;
         end
 
     end
@@ -1487,9 +1503,10 @@ for ii = 4:nLength-3
     MKS.m_Wght(ii) = wghtPres_;
    
     %% Plot for debugging
+    minValue = 1e-20;
     
     if strcmp(plotYorN,'PlotYes')
-        loglog = 1;
+        loglin = 1;
 
         aa = pPrs0;
         bb = plotPres2;
@@ -1497,19 +1514,20 @@ for ii = 4:nLength-3
         dd = plotPres4;
         ee = plotPres_;
     
-        if loglog == 1    
+        if loglin == 1    
             ylim([-15.0,-6.5])
             aa = log10(aa);
-            bb = log10(bb);
-            cc = log10(cc);
-            dd = log10(dd);
-            ee = log10(ee);
+            bb = log10(max(bb,minValue));
+            cc = log10(max(cc,minValue));
+            dd = log10(max(dd,minValue));
+            ee = log10(max(ee,minValue));
         end
-        plot(mass_0,aa, 'bo',...
+        
+        plot(mass_0,aa, 'mo',...
              mass2 ,bb,'r*-',...
-             mass3 ,cc,'r*-',...
-             mass4 ,dd,'r*-',...
-             mass_ ,ee,'r*-',...
+             mass3 ,cc,'b*-',...
+             mass4 ,dd,'k*-',...
+             mass_ ,ee,'g*-',...
              'LineWidth',2.0);       
         n_step = num2str(          ii-3,'%6.0f');
         N_step = num2str(     nLength-6,'%6.0f');
@@ -1684,7 +1702,6 @@ else
     mks.temper_K = temperature2;
 end
 
-
 function [ SRS ] =  fit_SRS_data(folderName,filter,axPlot,massPk)
 % store_TDS_srs
 %   folderName : grab all the files inside this folder
@@ -1695,6 +1712,7 @@ function [ SRS ] =  fit_SRS_data(folderName,filter,axPlot,massPk)
 %   shifting mass spectra. Assuming a flattop, find the
 %   mean partial pressure spanning 2*nn+1 data points.
 %
+global killFit
 
 warning('off','all')
 
@@ -1715,7 +1733,7 @@ m2slope = 2.440;
 minPres = 1.0e-12;          % Below minPres
 minWght = 0.8;
 
-nn = 3;                     % flattop span = 2*nn + 2
+nn = 4;                     % flattop span = 2*nn + 1
 
 %% Get the SRS folder's contents
 data = read_SRS_data(folderName);
@@ -1770,16 +1788,21 @@ f2 = f2-jBgn;
 f3 = f3-jBgn;
 f4 = f4-jBgn;
 
-mass2 = mass0(f2-nn:f2+nn+1);
-mass3 = mass0(f3-nn:f3+nn+1);
-mass4 = mass0(f4-nn:f4+nn+1);
+mass2 = mass0(f2-nn:f2+nn);
+mass3 = mass0(f3-nn:f3+nn);
+mass4 = mass0(f4-nn:f4+nn);
 
 %% Setup the correct plotting axes 
 axes(axPlot);
+killFit = 0;                                    % killFit used to exit the fitting for loop
 
 %%
 for ii = 4:nLength-3
 
+    if killFit == 1
+        break
+    end
+    
     if strcmp(filter,'Gaussian')
         pPrs_3 = pPrs(:,ii-3);
         pPrs_2 = pPrs(:,ii-2);
@@ -1797,9 +1820,9 @@ for ii = 4:nLength-3
 
     %% Find mass nearest each peak and find height of peak
 
-    pPrs2 = pPrs0(f2-nn:f2+nn+1);
-    pPrs3 = pPrs0(f3-nn:f3+nn+1);
-    pPrs4 = pPrs0(f4-nn:f4+nn+1);
+    pPrs2 = pPrs0(f2-nn:f2+nn);
+    pPrs3 = pPrs0(f3-nn:f3+nn);
+    pPrs4 = pPrs0(f4-nn:f4+nn);
     
     % Fit for mass 2    
     pPrs2max  =  max(pPrs2);
@@ -1812,7 +1835,7 @@ for ii = 4:nLength-3
         peakPres2 =  fit2(pkMass2)*pPrs2max;
         wghtPres2 =  std(plotPres2-pPrs2)/peakPres2;
     else
-        plotPres2 =  ones(2*nn+2,1)*peakPres2;
+        plotPres2 =  ones(2*nn+1,1)*peakPres2;
     end
     
     % Fit for mass 3
@@ -1820,7 +1843,7 @@ for ii = 4:nLength-3
     peakPres3 = mean(pPrs3);
     wghtPres3 =  std(pPrs3-peakPres3)/peakPres3;
     if peakPres3 < minPres || wghtPres3 > minWght
-        plotPres3 =  ones(2*nn+2,1)*peakPres3;
+        plotPres3 =  ones(2*nn+1,1)*peakPres3;
     else
         [fit3, ~] =  fit(mass3-m3Pk,pPrs3/pPrs3max,'poly2');
         if fit3.p1 < 0
@@ -1829,7 +1852,7 @@ for ii = 4:nLength-3
             peakPres3 =  fit3(pkMass3)*pPrs3max;
             wghtPres3 =  std(plotPres3-pPrs3)/peakPres3;
         else
-            plotPres3 =  ones(2*nn+2,1)*peakPres3;
+            plotPres3 =  ones(2*nn+1,1)*peakPres3;
         end
     end
     
@@ -1838,7 +1861,7 @@ for ii = 4:nLength-3
     peakPres4 = mean(pPrs4);
     wghtPres4 =  std(pPrs4-peakPres4)/peakPres4;
     if peakPres4 < minPres || wghtPres4 > minWght
-        plotPres4 =  ones(2*nn+2,1)*peakPres4;
+        plotPres4 =  ones(2*nn+1,1)*peakPres4;
     else
         [fit4, ~] =  fit(mass4-m4Pk,pPrs4/pPrs4max,'poly2');
         if fit4.p1 < 0
@@ -1847,7 +1870,7 @@ for ii = 4:nLength-3
             peakPres4 =  fit4(pkMass4)*pPrs4max;
             wghtPres4 =  std(plotPres4-pPrs4)/peakPres4;
         else
-            plotPres4 =  ones(2*nn+2,1)*peakPres4;
+            plotPres4 =  ones(2*nn+1,1)*peakPres4;
         end
 
     end
@@ -1860,27 +1883,28 @@ for ii = 4:nLength-3
     SRS.m4Wght(ii) = wghtPres4;
    
     %% Plot for debugging
+    minValue = 1e-20;
     
     if strcmp(plotYorN,'PlotYes')
-        loglog = 1;
+        loglin = 1;
 
         aa = pPrs0;
         bb = plotPres2;
         cc = plotPres3;
         dd = plotPres4;
     
-        if loglog == 1    
+        if loglin == 1    
             ylim([-13.0,-6.0])
             aa = log10(aa);
-            bb = log10(bb);
-            cc = log10(cc);
-            dd = log10(dd);
+            bb = log10(max(bb,minValue));
+            cc = log10(max(cc,minValue));
+            dd = log10(max(dd,minValue));
         end    
       
-        plot(mass0,aa,'bo-',...
+        plot(mass0,aa, 'mo',...
              mass2,bb,'r*-',...
-             mass3,cc,'r*-',...
-             mass4,dd,'r*-',...
+             mass3,cc,'b*-',...
+             mass4,dd,'k*-',...
              'LineWidth',3.0);
         xlim([ 1.5, 4.5])
         ylim([-13.0,-6.0])
@@ -1895,7 +1919,7 @@ for ii = 4:nLength-3
               ' : mass_2 = ' mass_2 ])
         box on
         grid on
-        pause(0.0020)
+        pause(0.000020)
     end
     % end debugging
     
