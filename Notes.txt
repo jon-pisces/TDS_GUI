@@ -12,7 +12,7 @@
 Using this workflow, anyone can work on the code from anywhere (just need to know the GitHub owner is now piscesCER, and the repo name on GitHub is TDS_GUI), and the code will be up-to-date.
 
 The piscesCER GitHub account is linked to the following email address: piscescer@gmail.com
-The piscesCER GitHub account PW and the gmail PW are: ferp***EBU2B29, where *** is the acronym for our ORU.
+The piscesCER GitHub account PW and the gmail PW are: *******EBU2B29, where ******* is the normal pisces PW.
 ****************************************************
 
 On ~6/23/2017, we started version control with GIT by copying TDS_GUI_v12.m and TDS_GUI_v12.fig to a new folder. 
