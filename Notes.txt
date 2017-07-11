@@ -1,2 +1,23 @@
-Starting version control with GIT by copying TDS_GUI_v12.m and .fig to this current folder.
+***** Version Control Workflow using Git *****
+1) Edit local files in the local repo.
+2) When satisfied, open GitHub Desktop and commit the changes (you need to add a description).
+3) Publish the repo to GitHub.
+
+Using this workflow, anyone can work on the code from anywhere (just need to know the GitHub owner is now piscesCER, and the repo name on GitHub is TDS_GUI), and the code will be up-to-date.
+
+The piscesCER GitHub account is linked to the following email address: piscescer@gmail.com
+The piscesCER GitHub account PW and the gmail PW are: ferp***EBU2B29, where *** is the acronym for our ORU.
+****************************************************
+
+On ~6/23/2017, we started version control with GIT by copying TDS_GUI_v12.m and TDS_GUI_v12.fig to a new folder. 
 Renamed TDS_GUI_v12.m and .fig 'TDS_GUI.m' and '.fig'
+A new local git repository was created in this new folder.
+
+On or about 7/7/2017, a new branch called 'Test' was created in order to develop new features such reading/analyzing PiscesB TDS data.
+
+On 7/11/2017, J.Yu transferred the TDS_GUI remote repository from the jon-pisces GitHub account to the piscesCER GitHub account. 
+The local repo and folder TDS_GUI were deleted.
+Then, the piscesCER GitHub repo named TDS_GUI was cloned to the local computer (and a new local repo was created, also named TDS_GUI).
+Now, the owner of local TDS_GUI repo is piscesCER.
+
+
