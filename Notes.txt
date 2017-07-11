@@ -1,7 +1,13 @@
 ***** Version Control Workflow using Git *****
 1) Edit local files in the local repo.
+<<<<<<< HEAD
 2) When satisfied, open GitHub Desktop and commit the changes (you need to add a description).
 3) Publish the repo to GitHub.
+=======
+2) When satisfied, open GitHub Desktop and 
+     a) Commit the changes to the local repo (you need to add a summary)
+     b) Publish the repo to GitHub (the master repo and any sub-branches will also be pushed to GitHub).
+>>>>>>> Test
 
 Using this workflow, anyone can work on the code from anywhere (just need to know the GitHub owner is now piscesCER, and the repo name on GitHub is TDS_GUI), and the code will be up-to-date.
 

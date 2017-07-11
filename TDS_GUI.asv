@@ -424,7 +424,6 @@ global axFnl
 global mks_data
 global srs_data
 global srsFit
-global killFit
 
 set(handles.pushbutton_Fit__MKS,'enable','off');
 
@@ -450,10 +449,6 @@ elseif get(handles.radiobutton_TDS_B,'Value')
 end
 
 mks_data = fit_MKS_data(filePathMKS,filter_,axFit,massPeak,TDS_AorB);
-
-if killFit == 1
-    return
-end
 
 plot_Log10_time(mks_data,'MKS Error',axFit);
 plot_Log10_time(mks_data,       'HD',axBck);
@@ -506,7 +501,6 @@ global axFnl
 global mks_data
 global srs_data
 global srsFit
-global killFit
 
 srsFit = 1;
 
@@ -526,10 +520,6 @@ massPeak.D2peak = str2double(get(handles.edit_D2pk_srs,'String'));
 
 filePathSRS = get(handles.edit_Path_SRS,'String');
 srs_data = fit_SRS_data(filePathSRS,filter_,axFit,massPeak);
-
-if killFit == 1
-    return
-end
 
 plot_Log10_time(srs_data,'SRS Error',axFit);
 plot_Log10_time(srs_data,       'HD',axBck);
@@ -1712,7 +1702,6 @@ function [ SRS ] =  fit_SRS_data(folderName,filter,axPlot,massPk)
 %   shifting mass spectra. Assuming a flattop, find the
 %   mean partial pressure spanning 2*nn+1 data points.
 %
-global killFit
 
 warning('off','all')
 
@@ -1733,7 +1722,7 @@ m2slope = 2.440;
 minPres = 1.0e-12;          % Below minPres
 minWght = 0.8;
 
-nn = 4;                     % flattop span = 2*nn + 1
+nn = 3;                     % flattop span = 2*nn + 1
 
 %% Get the SRS folder's contents
 data = read_SRS_data(folderName);
@@ -1788,8 +1777,8 @@ f2 = f2-jBgn;
 f3 = f3-jBgn;
 f4 = f4-jBgn;
 
-mass2 = mass0(f2-nn:f2+nn);
-mass3 = mass0(f3-nn:f3+nn);
+mass2 = mass0(f2-nn:f2+nn+1);
+mass3 = mass0(f3-nn:f3+nn+1);
 mass4 = mass0(f4-nn:f4+nn);
 
 %% Setup the correct plotting axes 
@@ -1820,9 +1809,9 @@ for ii = 4:nLength-3
 
     %% Find mass nearest each peak and find height of peak
 
-    pPrs2 = pPrs0(f2-nn:f2+nn);
-    pPrs3 = pPrs0(f3-nn:f3+nn);
-    pPrs4 = pPrs0(f4-nn:f4+nn);
+    pPrs2 = pPrs0(f2-nn:f2+nn+1);
+    pPrs3 = pPrs0(f3-nn:f3+nn+1);
+    pPrs4 = pPrs0(f4-nn:f4+nn+1);
     
     % Fit for mass 2    
     pPrs2max  =  max(pPrs2);
@@ -1919,7 +1908,7 @@ for ii = 4:nLength-3
               ' : mass_2 = ' mass_2 ])
         box on
         grid on
-        pause(0.000020)
+        pause(0.0020)
     end
     % end debugging
     
