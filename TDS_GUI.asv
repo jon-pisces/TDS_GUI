@@ -275,7 +275,14 @@ function edit_Temp_max_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
+function edit_time_min_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+function edit_time_max_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
 %% ===================== TDS GUI Operational Flow =========================
 
@@ -380,6 +387,7 @@ function   pushbutton_Imp_Temp_Callback(hObject, eventdata, handles)
 global mks_data
 global srs_data
 global srsFit
+
 set(handles.pushbutton_Imp_Temp,'enable','off');
 set(handles.checkbox_Temp_Data, 'Value',1);
 set(handles.pushbutton_TempTime,'enable','on');
@@ -387,14 +395,8 @@ set(handles.pushbutton_TempTime,'enable','on');
 fileName = get(handles.edit_Path_MKS,'String');
 
 if     get(handles.radiobutton_TDS_A,'Value')
-       TDS_AorB = 'TDS_A';
-elseif get(handles.radiobutton_TDS_B,'Value')
-       TDS_AorB = 'TDS_B';
-end
-
-if     strcmp(TDS_AorB,'TDS_A')
         data = read_MKS_data_A(fileName);
-elseif strcmp(TDS_AorB,'TDS_B')
+elseif get(handles.radiobutton_TDS_B,'Value')
         data = read_MKS_data_B(fileName);
 end
 
@@ -406,10 +408,15 @@ if srsFit == 1
                               srs_data.dtList, 'linear');                      
 end
 
-Tmax = max(mks_data.temptr);
-set(handles.edit_Temp_max,'String',num2str(Tmax,'%5.2f'));
+T_min = str2double(get(handles.edit_Temp_min,'String'));
+T_max = max(mks_data.temptr);
+set(handles.edit_Temp_max,'String',num2str(T_max,'%5.2f'));
 
+jBgn  = find(mks_data.temptr>(T_min-7.5) & mks_data.temptr<(T_min+7.5),1,'first');
+jEnd  = find(mks_data.temptr>(T_max-7.5) & mks_data.temptr<(T_max+7.5),1,'first');
 
+set(handles.edit_time_min,'String',num2str(mks_data.dtList(jBgn),'%5.2f'));
+set(handles.edit_time_max,'String',num2str(mks_data.dtList(jEnd),'%5.2f'));
 
 function    checkbox_Temp_Data_Callback(hObject, eventdata, handles)
 
@@ -424,6 +431,7 @@ global axFnl
 global mks_data
 global srs_data
 global srsFit
+global killFit
 
 set(handles.pushbutton_Fit__MKS,'enable','off');
 
@@ -450,6 +458,10 @@ end
 
 mks_data = fit_MKS_data(filePathMKS,filter_,axFit,massPeak,TDS_AorB);
 
+if killFit == 1
+    return
+end
+
 plot_Log10_time(mks_data,'MKS Error',axFit);
 plot_Log10_time(mks_data,       'HD',axBck);
 plot_Log10_time(mks_data,      'MKS',axFnl);
@@ -471,6 +483,9 @@ T_max = str2double(get(handles.edit_Temp_max,'String'));
 jBgn  = find(mks_data.temptr>(T_min-7.5) & mks_data.temptr<(T_min+7.5),1,'first');
 jEnd  = find(mks_data.temptr>(T_max-7.5) & mks_data.temptr<(T_max+7.5),1,'first');
 jSpan = jBgn:jEnd;
+
+set(handles.edit_time_min,'String',num2str(mks_data.dtList(jBgn),'%5.2f'));
+set(handles.edit_time_max,'String',num2str(mks_data.dtList(jEnd),'%5.2f'));
 
 t1min = min(mks_data.dtList);
 t1max =     mks_data.dtList(jSpan(1))-50;
@@ -501,6 +516,7 @@ global axFnl
 global mks_data
 global srs_data
 global srsFit
+global killFit
 
 srsFit = 1;
 
@@ -520,6 +536,10 @@ massPeak.D2peak = str2double(get(handles.edit_D2pk_srs,'String'));
 
 filePathSRS = get(handles.edit_Path_SRS,'String');
 srs_data = fit_SRS_data(filePathSRS,filter_,axFit,massPeak);
+
+if killFit == 1
+    return
+end
 
 plot_Log10_time(srs_data,'SRS Error',axFit);
 plot_Log10_time(srs_data,       'HD',axBck);
@@ -1204,8 +1224,15 @@ elseif ChooseSRS
        set(handles.pushbutton_TxtF_SRS,'enable','on');
 end
 
+function   edit_time_min_Callback(hObject, eventdata, handles)
+global mks_data
+global srs_data
 
-             
+
+function   edit_time_max_Callback(hObject, eventdata, handles)
+global mks_data
+global srs_data
+
 % G Store =================================================================
 
 function         edit_Var__MKS_Callback(hObject, eventdata, handles)
@@ -1312,7 +1339,7 @@ m_Pk  = massPk.Hepeak;
 delPk = 0.2;                % delta mass to separate masses near each peak
  
 minPres = 1.0e-15;          %
-minWght = 0.8;              %
+minWght = 0.999;              % 0.8
 
 nn = 6;                     % flattop span = 2*nn + 1 quick fix from nn = 6
 
@@ -1386,12 +1413,6 @@ mass3 = mass_0(f3);
 mass4 = mass_0(f4);
 mass_ = mass_0(f_);
 
-%% Define fitting parameters
-ft = fittype( 'poly2' );
-opts = fitoptions( 'Method', 'LinearLeastSquares' );
-opts.Lower = [-5e3 -3e1 -1e1];
-opts.Robust = 'Bisquare';
-opts.Upper = [ 0.0  3e1  1e1];
 
 %% Setup the correct plotting axes 
 axes(axPlot);
@@ -1423,66 +1444,12 @@ for ii = 4:nLength-3
     pPrs4 = pPrs0(f4);
     pPrs_ = pPrs0(f_);
     
-    % Fit for mass 2
-    pPrs2max  =  max(pPrs2);
-    [fit2, ~] =  fit(mass2-m2Pk,pPrs2/pPrs2max, ft, opts);
-    pkMass2   = -fit2.p2/(2*fit2.p1);
-    plotPres2 =  fit2(mass2-m2Pk)*pPrs2max;
-    peakPres2 =  fit2(pkMass2)*pPrs2max;
-    wghtPres2 =  std(plotPres2-pPrs2)/peakPres2;
-    
-    % Fit for mass 3
-    pPrs3max  =  max(pPrs3);
-    peakPres3 = mean(pPrs3);
-    wghtPres3 =  std(pPrs3-peakPres3)/peakPres3;
-    if peakPres3 < minPres || wghtPres3 > minWght       % Decides how to fit when signal is below noise
-        plotPres3 =  ones(length(f3),1)*peakPres3;
-    else
-        [fit3, ~] =  fit(mass3-m3Pk,pPrs3/pPrs3max, ft, opts);
-        pkMass3   = -fit3.p2/(2*fit3.p1);
-        plotPres3 =  fit3(mass3-m3Pk)*pPrs3max;
-        peakPres3 =  fit3(pkMass3)*pPrs3max;
-        wghtPres3 =  std(plotPres3-pPrs3)/peakPres3;
-    end
-    
-    % Fit for mass 4
-    pPrs4max  =  max(pPrs4);
-    peakPres4 = mean(pPrs4);
-    wghtPres4 =  std(pPrs4-peakPres4)/peakPres4;
-    if peakPres4 < minPres || wghtPres4 > minWght
-        plotPres4 =  ones(length(f4),1)*peakPres4;
-    else
-        [fit4, ~] =  fit(mass4-m4Pk,pPrs4/pPrs4max, ft, opts);
-        if fit4.p1 < 0
-            pkMass4   = -fit4.p2/(2*fit4.p1);
-            plotPres4 =  fit4(mass4-m4Pk)*pPrs4max;
-            peakPres4 =  fit4(pkMass4)*pPrs4max;
-            wghtPres4 =  std(plotPres4-pPrs4)/peakPres4;
-        else
-            plotPres4 =  ones(length(f4),1)*peakPres4;
-        end
-
-    end
-    
-    % Fit for mass _ (i.e. He)
-    pPrs_max  =  max(pPrs_);
-    peakPres_ = mean(pPrs_);
-    wghtPres_ =  std(pPrs_-peakPres_)/peakPres_;
-    if peakPres_ < minPres || wghtPres_ > minWght
-        plotPres_ =  ones(length(f_),1)*peakPres_;
-    else
-        [fit_, ~] =  fit(mass_-m_Pk,pPrs_/pPrs_max, ft, opts);
-        if fit_.p1 < 0
-            pkMass_   = -fit_.p2/(2*fit_.p1);
-            plotPres_ =  fit_(mass_-m_Pk)*pPrs_max;
-            peakPres_ =  fit_(pkMass_)*pPrs_max;
-            wghtPres_ =  std(plotPres_-pPrs_)/peakPres_;
-        else
-            plotPres_ =  ones(length(f_),1)*peakPres_;
-        end
-
-    end
-    
+    % Fit Mass Peaks
+    [plotPres2,peakPres2,wghtPres2] = fit_quad_to_mass(pPrs2,mass2-m2Pk,f2,[minPres,minWght]);
+    [plotPres3,peakPres3,wghtPres3] = fit_quad_to_mass(pPrs3,mass3-m3Pk,f3,[minPres,minWght]);
+    [plotPres4,peakPres4,wghtPres4] = fit_quad_to_mass(pPrs4,mass4-m4Pk,f4,[minPres,minWght]);
+    [plotPres_,peakPres_,wghtPres_] = fit_quad_to_mass(pPrs_,mass_-m_Pk,f_,[minPres,minWght]);
+ 
     MKS.m2Pres(ii) = peakPres2;
     MKS.m3Pres(ii) = peakPres3;
     MKS.m4Pres(ii) = peakPres4;
@@ -1522,17 +1489,19 @@ for ii = 4:nLength-3
         n_step = num2str(          ii-3,'%6.0f');
         N_step = num2str(     nLength-6,'%6.0f');
         timeS  = num2str(MKS.dtList(ii),'%8.2f');
-        mass_2 = num2str(       pkMass2,'%5.3f');
+%         mass_2 = num2str(       pkMass2,'%5.3f');
         title(['n_{step} = ' n_step ' of ' N_step ...
-               ' : time = '  timeS ' [s] '...
-               ' : mass_2 = ' mass_2 ])
+               ' : time = '  timeS ' [s] '])        
+%         title(['n_{step} = ' n_step ' of ' N_step ...
+%                ' : time = '  timeS ' [s] '...
+%                ' : mass_2 = ' mass_2 ])
         xlim([ 1.5, 4.5])
         ylim([ -14.5,-6.5])
         xlabel('Mass / Charge')
         ylabel('Log_{10}(Partial Pressure) [ T ]')
         box on
         grid on
-%        pause(0.0020)
+        pause(0.00001)
         
     end
     % end debugging
@@ -1702,6 +1671,7 @@ function [ SRS ] =  fit_SRS_data(folderName,filter,axPlot,massPk)
 %   shifting mass spectra. Assuming a flattop, find the
 %   mean partial pressure spanning 2*nn+1 data points.
 %
+global killFit
 
 warning('off','all')
 
@@ -1722,7 +1692,7 @@ m2slope = 2.440;
 minPres = 1.0e-12;          % Below minPres
 minWght = 0.8;
 
-nn = 3;                     % flattop span = 2*nn + 1
+nn = 4;                     % flattop span = 2*nn + 1
 
 %% Get the SRS folder's contents
 data = read_SRS_data(folderName);
@@ -1745,12 +1715,27 @@ massN  = data.massNumb;
 mTspan = find(massN > 2.00 & massN < 3.00);
 
 %% Find how much the mass spectrum shifts
+
+% % DELETE or REMOVE DEBUGGING
+% m2Pk = 39;
+% m3Pk = 40;
+% m4Pk = 41;
+% % Define zoom values
+% zoomBgn = 37.5;
+% zoomEnd = 41.5;
+
 [~,f2] = min(abs(massN-m2Pk));
 [~,f3] = min(abs(massN-m3Pk));
 [~,f4] = min(abs(massN-m4Pk));
-    
-jBgn = 1 + round(0.5*length(massN)/4);
-jEnd = 1 + round(3.5*length(massN)/4);
+
+total_N = floor(max(massN));
+
+% Define zoom values
+zoomBgn = 0.5;
+zoomEnd = 3.5;
+
+jBgn = 1 + round(zoomBgn*length(massN)/total_N);
+jEnd = 1 + round(zoomEnd*length(massN)/total_N);
 
 pPrs  = zeros(jEnd-jBgn+1,nLength);
 mass0 = massN(jBgn:jEnd);
@@ -1777,9 +1762,13 @@ f2 = f2-jBgn;
 f3 = f3-jBgn;
 f4 = f4-jBgn;
 
-mass2 = mass0(f2-nn:f2+nn+1);
-mass3 = mass0(f3-nn:f3+nn+1);
-mass4 = mass0(f4-nn:f4+nn);
+f2 = f2-nn:f2+nn;                                   % Add 2*nn index values around m2Pk
+f3 = f3-nn:f3+nn;
+f4 = f4-nn:f4+nn;
+
+mass2 = mass0(f2);
+mass3 = mass0(f3);
+mass4 = mass0(f4);
 
 %% Setup the correct plotting axes 
 axes(axPlot);
@@ -1807,62 +1796,66 @@ for ii = 4:nLength-3
         pPrs0  = pPrs(:,ii  );
     end
 
-    %% Find mass nearest each peak and find height of peak
+    %% Find mass nearest each peak and find height of peak    
+    pPrs2 = pPrs0(f2);
+    pPrs3 = pPrs0(f3);
+    pPrs4 = pPrs0(f4);
 
-    pPrs2 = pPrs0(f2-nn:f2+nn+1);
-    pPrs3 = pPrs0(f3-nn:f3+nn+1);
-    pPrs4 = pPrs0(f4-nn:f4+nn+1);
-    
-    % Fit for mass 2    
-    pPrs2max  =  max(pPrs2);
-    peakPres2 = mean(pPrs2);
-    wghtPres2 =  std(pPrs2-peakPres2)/peakPres2;
-    [fit2, ~] =  fit(mass2-m2Pk,pPrs2/pPrs2max,'poly2');
-    if fit2.p1 < 0
-        pkMass2   = -fit2.p2/(2*fit2.p1);
-        plotPres2 =  fit2(mass2-m2Pk)*pPrs2max;
-        peakPres2 =  fit2(pkMass2)*pPrs2max;
-        wghtPres2 =  std(plotPres2-pPrs2)/peakPres2;
-    else
-        plotPres2 =  ones(2*nn+1,1)*peakPres2;
-    end
-    
-    % Fit for mass 3
-    pPrs3max  =  max(pPrs3);
-    peakPres3 = mean(pPrs3);
-    wghtPres3 =  std(pPrs3-peakPres3)/peakPres3;
-    if peakPres3 < minPres || wghtPres3 > minWght
-        plotPres3 =  ones(2*nn+1,1)*peakPres3;
-    else
-        [fit3, ~] =  fit(mass3-m3Pk,pPrs3/pPrs3max,'poly2');
-        if fit3.p1 < 0
-            pkMass3   = -fit3.p2/(2*fit3.p1);
-            plotPres3 =  fit3(mass3-m3Pk)*pPrs3max;
-            peakPres3 =  fit3(pkMass3)*pPrs3max;
-            wghtPres3 =  std(plotPres3-pPrs3)/peakPres3;
-        else
-            plotPres3 =  ones(2*nn+1,1)*peakPres3;
-        end
-    end
-    
-    % Fit for mass 4
-    pPrs4max  =  max(pPrs4);
-    peakPres4 = mean(pPrs4);
-    wghtPres4 =  std(pPrs4-peakPres4)/peakPres4;
-    if peakPres4 < minPres || wghtPres4 > minWght
-        plotPres4 =  ones(2*nn+1,1)*peakPres4;
-    else
-        [fit4, ~] =  fit(mass4-m4Pk,pPrs4/pPrs4max,'poly2');
-        if fit4.p1 < 0
-            pkMass4   = -fit4.p2/(2*fit4.p1);
-            plotPres4 =  fit4(mass4-m4Pk)*pPrs4max;
-            peakPres4 =  fit4(pkMass4)*pPrs4max;
-            wghtPres4 =  std(plotPres4-pPrs4)/peakPres4;
-        else
-            plotPres4 =  ones(2*nn+1,1)*peakPres4;
-        end
-
-    end
+    % Fit Mass Peaks
+    [plotPres2,peakPres2,wghtPres2] = fit_quad_to_mass(pPrs2,mass2-m2Pk,f2,[minPres,minWght]);
+    [plotPres3,peakPres3,wghtPres3] = fit_quad_to_mass(pPrs3,mass3-m3Pk,f3,[minPres,minWght]);
+    [plotPres4,peakPres4,wghtPres4] = fit_quad_to_mass(pPrs4,mass4-m4Pk,f4,[minPres,minWght]);
+%     
+%     % Fit for mass 2    
+%     pPrs2max  =  max(pPrs2);
+%     peakPres2 = mean(pPrs2);
+%     wghtPres2 =  std(pPrs2-peakPres2)/peakPres2;
+%     [fit2, ~] =  fit(mass2-m2Pk,pPrs2/pPrs2max,'poly2');
+%     if fit2.p1 < 0
+%         pkMass2   = -fit2.p2/(2*fit2.p1);
+%         plotPres2 =  fit2(mass2-m2Pk)*pPrs2max;
+%         peakPres2 =  fit2(pkMass2)*pPrs2max;
+%         wghtPres2 =  std(plotPres2-pPrs2)/peakPres2;
+%     else
+%         plotPres2 =  ones(2*nn+1,1)*peakPres2;
+%     end
+%     
+%     % Fit for mass 3
+%     pPrs3max  =  max(pPrs3);
+%     peakPres3 = mean(pPrs3);
+%     wghtPres3 =  std(pPrs3-peakPres3)/peakPres3;
+%     if peakPres3 < minPres || wghtPres3 > minWght
+%         plotPres3 =  ones(2*nn+1,1)*peakPres3;
+%     else
+%         [fit3, ~] =  fit(mass3-m3Pk,pPrs3/pPrs3max,'poly2');
+%         if fit3.p1 < 0
+%             pkMass3   = -fit3.p2/(2*fit3.p1);
+%             plotPres3 =  fit3(mass3-m3Pk)*pPrs3max;
+%             peakPres3 =  fit3(pkMass3)*pPrs3max;
+%             wghtPres3 =  std(plotPres3-pPrs3)/peakPres3;
+%         else
+%             plotPres3 =  ones(2*nn+1,1)*peakPres3;
+%         end
+%     end
+%     
+%     % Fit for mass 4
+%     pPrs4max  =  max(pPrs4);
+%     peakPres4 = mean(pPrs4);
+%     wghtPres4 =  std(pPrs4-peakPres4)/peakPres4;
+%     if peakPres4 < minPres || wghtPres4 > minWght
+%         plotPres4 =  ones(2*nn+1,1)*peakPres4;
+%     else
+%         [fit4, ~] =  fit(mass4-m4Pk,pPrs4/pPrs4max,'poly2');
+%         if fit4.p1 < 0
+%             pkMass4   = -fit4.p2/(2*fit4.p1);
+%             plotPres4 =  fit4(mass4-m4Pk)*pPrs4max;
+%             peakPres4 =  fit4(pkMass4)*pPrs4max;
+%             wghtPres4 =  std(plotPres4-pPrs4)/peakPres4;
+%         else
+%             plotPres4 =  ones(2*nn+1,1)*peakPres4;
+%         end
+% 
+%     end
     
     SRS.m2Pres(ii) = peakPres2;
     SRS.m3Pres(ii) = peakPres3;
@@ -1902,13 +1895,15 @@ for ii = 4:nLength-3
         n_step = num2str(          ii-3,'%6.0f');
         N_step = num2str(     nLength-6,'%6.0f');
         timeS  = num2str(SRS.dtList(ii),'%8.2f');
-        mass_2 = num2str(  m2Pk+pkMass2,'%5.3f');
+% %         mass_2 = num2str(  m2Pk+pkMass2,'%5.3f');
+%         title(['n_{step} = ' n_step ' of ' N_step ...
+%                 ' : time = ' timeS ' [s] '...
+%               ' : mass_2 = ' mass_2 ])        
         title(['n_{step} = ' n_step ' of ' N_step ...
-                ' : time = ' timeS ' [s] '...
-              ' : mass_2 = ' mass_2 ])
+                ' : time = ' timeS ' [s] '])
         box on
         grid on
-        pause(0.0020)
+        pause(0.00001)
     end
     % end debugging
     
@@ -2048,6 +2043,34 @@ opts.Robust = 'Bisquare';
 ramp = fitTemp.p1/xMax;
 yFit = fitTemp(xData);
 
+function [plotPres,peakPres,wghtPres] = fit_quad_to_mass(pPrs,massShifted,f_idx,min1)
+
+%% Define fitting parameters
+minPres = 1e-9;   % Arbitrary threshold to not need to take the mean of the partial pressure
+
+pPrsMax  =  max(pPrs);
+fitQ =  polyfit(massShifted,pPrs/pPrsMax,2);
+plotPres =  polyval(fitQ,massShifted)*pPrsMax;
+peakPres=  max(polyval(fitQ,massShifted))*pPrsMax;
+wghtPres =  std(plotPres-pPrs)/peakPres;   
+   
+maxMassVal = -fitQ(2)/(2*fitQ(1));      % find the mass value corresponding to peak of fitQ
+% If cocave up or if the peak mass value is outside of mass range then use mean pressure value
+if fitQ(1) >= 0  
+    peakPres =  mean(pPrs);
+    wghtPres =  std(pPrs-peakPres)/peakPres;
+    plotPres =  ones(length(f_idx),1)*peakPres;
+elseif maxMassVal >= massShifted(end) || maxMassVal <= massShifted(1) && peakPres < minPres
+    peakPres =  mean(pPrs);
+    wghtPres =  std(pPrs-peakPres)/peakPres;
+    plotPres =  ones(length(f_idx),1)*peakPres;
+end  
+
+% if fitQ(1) >= 0 || maxMassVal >= massShifted(end) || maxMassVal <= massShifted(1)  
+%     peakPres =  mean(pPrs);
+%     wghtPres =  std(pPrs-peakPres)/peakPres;
+%     plotPres =  ones(length(f_idx),1)*peakPres;
+% end  
 
 
 
@@ -2132,4 +2155,13 @@ ylabel(yL)
 box on
 
 
+
+
+
 %% END of TDS GUI Subroutines =============================================
+
+
+
+
+
+
