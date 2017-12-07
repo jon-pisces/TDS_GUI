@@ -975,8 +975,10 @@ data = mks_data;
 T_min = str2double(get(handles.edit_Temp_min,'String'));
 T_max = str2double(get(handles.edit_Temp_max,'String'));
 
-jBgn = find(data.temptr>(T_min-7.5) & data.temptr<(T_min+7.5),1,'first');
-jEnd = find(data.temptr>(T_max-7.5) & data.temptr<(T_max+7.5),1,'first');
+Tspan_ = 20.0;
+
+jBgn = find(data.temptr>(T_min-Tspan_) & data.temptr<(T_min+Tspan_),1,'first');
+jEnd = find(data.temptr>(T_max-Tspan_) & data.temptr<(T_max+Tspan_),1,'first');
 jSpan = jBgn:jEnd;
 
 [RampRate,yTemp] = fit_TempTime(data.dtList(jSpan),data.temptr(jSpan));
@@ -1262,8 +1264,9 @@ jSpan = data.jSpan;
 Header1 = ['D Retention = ' num2str(data.Dreten,'%8.4e') ' [D/m^2]' ...
            ' | Temperatures Spanned = ' num2str(data.temptr(min(data.jSpan)),'%7.3e')...
                                  ' to ' num2str(data.temptr(max(data.jSpan)),'%7.3e') ];
-Header2 = 'Time[s]     Temp[K]     DFlux[D/m^2/s]  Error[std/peak]';
-Values  = [data.dtList(jSpan),data.temptr(jSpan),data.D_flux(jSpan)];
+Header2 = 'Time[s]     Temp[K]     DFlux[D/m^2/s]   HDFlux[HD/m^2/s]   D2Flux[D2/m^2/s]';
+Values  = [data.dtList(jSpan),data.temptr(jSpan),data.D_flux(jSpan),...
+           data.HDflux(jSpan),data.D2flux(jSpan)];
 
 Var__MKS = get(handles.edit_Var__MKS,'String');
 fileName = [Var__MKS '.txt'];
@@ -1283,8 +1286,9 @@ jSpan = data.jSpan;
 Header1 = ['D Retention = ' num2str(data.Dreten,'%8.4e') ' [D/m^2]' ...
            ' | Temperatures Spanned = ' num2str(data.temptr(min(data.jSpan)),'%7.3e')...
                                  ' to ' num2str(data.temptr(max(data.jSpan)),'%7.3e') ];
-Header2 = 'Time[s]     Temp[K]     DFlux[D/m^2/s]  Error[std/peak]';
-Values  = [data.dtList(jSpan),data.temptr(jSpan),data.D_flux(jSpan)];
+Header2 = 'Time[s]     Temp[K]     DFlux[D/m^2/s]   HDFlux[HD/m^2/s]   D2Flux[D2/m^2/s]';
+Values  = [data.dtList(jSpan),data.temptr(jSpan),data.D_flux(jSpan),...
+           data.HDflux(jSpan),data.D2flux(jSpan)];
 
 Var__SRS = get(handles.edit_Var__SRS,'String');
 fileName = [Var__SRS '.txt'];
@@ -1655,11 +1659,13 @@ mks.partPres = cell2mat(dataArray(:,iNumb));
 temperature1 = dataArray{:,iTemp1}+273.15;
 temperature2 = dataArray{:,iTemp2}+273.15;
 
-if max(temperature1) > max(temperature2)
-    mks.temper_K = temperature1;
-else
-    mks.temper_K = temperature2;
-end
+% if max(temperature1) > max(temperature2)
+%     mks.temper_K = temperature1;
+% else
+%     mks.temper_K = temperature2;
+% end
+
+mks.temper_K = temperature1;  %Adhoc fix (plug is disconnected fro temperature2)
 
 function [ SRS ] =  fit_SRS_data(folderName,filter,axPlot,massPk)
 % store_TDS_srs
