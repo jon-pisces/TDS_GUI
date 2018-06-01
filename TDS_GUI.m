@@ -558,9 +558,15 @@ set(handles.radiobutton_ChooseSRS,'Value',1)
 T_min = str2double(get(handles.edit_Temp_min,'String'));
 T_max = str2double(get(handles.edit_Temp_max,'String'));
 
-jBgn  = find(mks_data.temptr>(T_min-7.5) & mks_data.temptr<(T_min+7.5),1,'first');
-jEnd  = find(mks_data.temptr>(T_max-7.5) & mks_data.temptr<(T_max+7.5),1,'first');
+Tspan_ = 20.0;
+
+jBgn = find(mks_data.temptr>(T_min-Tspan_) & mks_data.temptr<(T_min+Tspan_),1,'first');
+jEnd = find(mks_data.temptr>(T_max-Tspan_) & mks_data.temptr<(T_max+Tspan_),1,'first');
 jSpan = jBgn:jEnd;
+
+% jBgn  = find(mks_data.temptr>(T_min-7.5) & mks_data.temptr<(T_min+7.5),1,'first');
+% jEnd  = find(mks_data.temptr>(T_max-7.5) & mks_data.temptr<(T_max+7.5),1,'first');
+% jSpan = jBgn:jEnd;
 
 t1min = min(mks_data.dtList);
 t1max =     mks_data.dtList(jSpan(1))-50;
@@ -1748,12 +1754,18 @@ mass0 = massN(jBgn:jEnd);
 
 [~,j2slope] = min(abs(massN-m2slope)); 
 
+% Centers the plot (removes "wiggle")
 for ii = 1:nLength
     pPrsT = data.partPres(mTspan,ii);
     del_T = log10(pPrsT(2:end))-log10(pPrsT(1:end-1));
     [~,iT]= max(abs(del_T));
     del_f = j2slope-(mTspan(1)+iT);
     pPrs(:,ii) = data.partPres(jBgn-del_f:jEnd-del_f,ii);
+
+%   Adhoc fix to bad data    
+%     del_f = -1;
+%     pPrs(:,ii) = data.partPres(jBgn-del_f:jEnd-del_f,ii);
+    
 %     ii
 %     clf
 %     semilogy(mass0,pPrs(:,ii))
@@ -1838,6 +1850,9 @@ for ii = 4:nLength-3
             dd = log10(max(dd,minValue));
         end    
       
+        if ii == 90
+            pause(0.00001)
+        end
         plot(mass0,aa, 'mo',...
              mass2,bb,'r*-',...
              mass3,cc,'b*-',...
