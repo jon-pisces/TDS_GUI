@@ -1,0 +1,26 @@
+Change Log for Mike's TDS GUI Matlab code
+
+8/7/2019
+
+SRS uses characteristic shape of mass peaks as "basis" functions for data fits:
+a + b*f_H2 + c*f_HD + d*f_D2 
+
+To do: get characteristic shapes of peaks for MKS. Currently MKS still uses quadratic fit to mass peaks.
+
+Adjustable polynomial order for scaling H2 to D2 (or HD).
+
+Background subtraction method uses a linearly decaying weighting between "before" and "after" fits. "Before" refers to before the TDS ramp, and "after" refers to after!
+
+Todo: allow only before or after fit to be used for background subtraction
+
+Calibration factor (or ionization factor) is adjustable for D2 and HD when calculating total D flux.
+
+Calibration for He, but needs to be completed.
+
+Log/linear buttons for final fit.
+
+Total D retention values displayed in upper right hand corner of final fit.
+
+Sample area is an input instead of diameter.
+D2 leak rate is now 2.15E-10 mol/s (new leak bottle a couple months ago).
+
