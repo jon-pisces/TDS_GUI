@@ -104,10 +104,8 @@ set(handles.radiobutton_ChooseSRS,'enable','off');
 set(handles.checkbox_Temp_Data,'enable','off');
 set(handles.checkbox_D2fluxMKS,'enable','off');
 set(handles.checkbox_HDfluxMKS,'enable','off');
-set(handles.checkbox_HefluxMKS,'enable','off');
 set(handles.checkbox_D2fluxSRS,'enable','off');
 set(handles.checkbox_HDfluxSRS,'enable','off');
-set(handles.checkbox_HefluxSRS,'enable','off');
 
 
 % UIWAIT makes TDS_GUI wait for user response (see UIRESUME)
@@ -145,10 +143,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 function edit_HDpk_srs_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-function edit_Hepk_srs_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -225,14 +219,6 @@ function edit_mks_HD_p2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-function edit_mks_He_p1_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-function edit_mks_He_p2_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 function edit_srs_D2_p1_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
@@ -246,14 +232,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 function edit_srs_HD_p2_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-function edit_srs_He_p1_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-function edit_srs_He_p2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -381,9 +359,6 @@ function         edit_srsHePresC_Callback(hObject, eventdata, handles)
 function         edit_srsPresZ_Callback(hObject, eventdata, handles)
 
 function         edit_SampleArea_Callback(hObject, eventdata, handles)
-dumVar = get(handles.edit_SampleArea,'String');
-dumVar = eval(dumVar);
-set(handles.edit_SampleArea,'String',dumVar);
 
 function         edit_D2LeakRate_Callback(hObject, eventdata, handles)
 function         edit_HeLeakRate_Callback(hObject, eventdata, handles)
@@ -522,9 +497,8 @@ set(handles.pushbutton_SlctData,  'enable','on');
 set(handles.pushbutton_TempTime,  'enable','on');
 set(handles.pushbutton_PeaksFit,  'enable','on');
 set(handles.pushbutton_FitError,  'enable','on');
-set(handles.radiobutton_Scale__He,'enable','on');
-set(handles.radiobutton_Scale__HD,'enable','on');
 set(handles.radiobutton_Scale__D2,'enable','on');
+set(handles.radiobutton_Scale__HD,'enable','on');
 set(handles.radiobutton_ChooseMKS,'enable','on');
 
 set(handles.radiobutton_Scale__HD,'Value',1);
@@ -585,8 +559,8 @@ end
 
 massPeak.H2peak = str2double(get(handles.edit_H2pk_srs,'String'));
 massPeak.HDpeak = str2double(get(handles.edit_HDpk_srs,'String'));
-massPeak.Hepeak = str2double(get(handles.edit_Hepk_srs,'String'));
 massPeak.D2peak = str2double(get(handles.edit_D2pk_srs,'String'));
+massPeak.Hepeak = massPeak.D2peak-0.2;  % Placeholder
 massPeak.zeroP_ = str2double(get(handles.edit_srsPresZ,'String'));
 
 filePathSRS = get(handles.edit_Path_SRS,'String');
@@ -681,8 +655,6 @@ function         edit_H2pk_srs_Callback(hObject, eventdata, handles)
 
 function         edit_HDpk_srs_Callback(hObject, eventdata, handles)
 
-function         edit_Hepk_srs_Callback(hObject, eventdata, handles)
-
 function         edit_D2pk_srs_Callback(hObject, eventdata, handles)
 
 function   pushbutton_PeaksFit_Callback(hObject, eventdata, handles)
@@ -759,7 +731,6 @@ ChooseSRS = get(handles.radiobutton_ChooseSRS,'Value');
 
 Scale__D2 = get(handles.radiobutton_Scale__D2,'Value');
 Scale__HD = get(handles.radiobutton_Scale__HD,'Value');
-Scale__He = get(handles.radiobutton_Scale__He,'Value');
 
 if     ChooseMKS
        data = mks_data;
@@ -781,14 +752,11 @@ da.dtList = data.dtList(indx);
 da.m2Pres = data.m2Pres(indx);
 da.m3Pres = data.m3Pres(indx);
 da.m4Pres = data.m4Pres(indx);
-da.m_Pres = data.m_Pres(indx);
 
 if     get(handles.radiobutton_Scale__HD,'Value')
        plot_Log10_time(da,'HD',axBck);
 elseif get(handles.radiobutton_Scale__D2,'Value')
        plot_Log10_time(da,'D2',axBck);
-elseif get(handles.radiobutton_Scale__He,'Value')
-       plot_Log10_time(da,'He',axBck);
 end
 
 set(handles.pushbutton_PerformFit,'enable','on');
@@ -804,7 +772,6 @@ ChooseSRS = get(handles.radiobutton_ChooseSRS,'Value');
 
 Scale__D2 = get(handles.radiobutton_Scale__D2,'Value');
 Scale__HD = get(handles.radiobutton_Scale__HD,'Value');
-Scale__He = get(handles.radiobutton_Scale__He,'Value');
 
 if     ChooseMKS
        data= mks_data;
@@ -826,10 +793,8 @@ xL = 'time [s]';
 yL = 'Log_{10}(Partial Pressure) [ T ]';
 tHD = 'H2 scaled to HD';
 tD2 = 'H2 scaled to D2';
-tHe = 'H2 scaled to He';
 m3  = 'b*-';
 m4  = 'k*-';
-m_  = 'g*-';
 
 if     ChooseMKS && Scale__HD
             pOrder1  = str2double(get(handles.edit_mks_HD_p1,'String'));
@@ -843,12 +808,6 @@ elseif ChooseMKS && Scale__D2
             mks_data.m4Back = scale_back_2(data.m2Pres,data.m4Pres,data.m4Wght,indx,pOrder1,pOrder2,axBck);
             mks_data.m4Back = max(mks_data.m4Back,str2double(get(handles.edit_mksPresZ,'String')));
             plot_xx_yy_2(data.dtList,mks_data.m4Back,data.m4Pres,tD2,xL,yL,m4,axFnl,1)
-elseif ChooseMKS && Scale__He
-            pOrder1  = str2double(get(handles.edit_mks_He_p1,'String'));
-            pOrder2  = str2double(get(handles.edit_mks_He_p2,'String'));
-            mks_data.m_Back = scale_back_2(data.m2Pres,data.m_Pres,data.m_Wght,indx,pOrder1,pOrder2,axBck);
-            mks_data.m_Back = max(mks_data.m_Back,str2double(get(handles.edit_mksPresZ,'String')));
-            plot_xx_yy_2(data.dtList,mks_data.m_Back,data.m_Pres,tHe,xL,yL,m_,axFnl,1)
 elseif ChooseSRS && Scale__HD
             pOrder1  = str2double(get(handles.edit_srs_HD_p1,'String'));
             pOrder2  = str2double(get(handles.edit_srs_HD_p2,'String'));
@@ -861,12 +820,6 @@ elseif ChooseSRS && Scale__D2
             srs_data.m4Back = scale_back_2(data.m2Pres,data.m4Pres,data.m4Wght,indx,pOrder1,pOrder2,axBck);
             srs_data.m4Back = max(srs_data.m4Back,str2double(get(handles.edit_srsPresZ,'String')));
             plot_xx_yy_2(data.dtList,srs_data.m4Back,data.m4Pres,tD2,xL,yL,m4,axFnl,1)
-elseif ChooseSRS && Scale__He
-            pOrder1  = str2double(get(handles.edit_srs_He_p1,'String'));
-            pOrder2  = str2double(get(handles.edit_srs_He_p2,'String'));
-            srs_data.m_Back = scale_back_2(data.m2Pres,data.m_Pres,data.m_Wght,indx,pOrder1,pOrder2,axBck);
-            srs_data.m_Back = max(srs_data.m_Back,str2double(get(handles.edit_srsPresZ,'String')));
-            plot_xx_yy_2(data.dtList,srs_data.m_Back,data.m4Pres,tHe,xL,yL,m_,axFnl,1)
 end
 
 set(handles.pushbutton_FluxTime,'enable','on');
@@ -876,14 +829,9 @@ function    checkbox_D2fluxMKS_Callback(hObject, eventdata, handles)
 
 function    checkbox_HDfluxMKS_Callback(hObject, eventdata, handles)
 
-function    checkbox_HefluxMKS_Callback(hObject, eventdata, handles)
-
 function    checkbox_D2fluxSRS_Callback(hObject, eventdata, handles)
 
 function    checkbox_HDfluxSRS_Callback(hObject, eventdata, handles)
-
-function    checkbox_HefluxSRS_Callback(hObject, eventdata, handles)
-
 
 % E Background ============================================================
 
@@ -911,20 +859,6 @@ if val > 5 || val < 0
     set(handles.edit_mks_HD_p2,'String',num2str(1,'%2d'));  
 end
 
-function         edit_mks_He_p1_Callback(hObject, eventdata, handles)
-val = str2double(get(handles.edit_mks_He_p1,'String'));
-if val > 5 || val < 0
-    set(handles.edit_mks_He_p1,'String',num2str(1,'%2d'));  
-end
-
-function         edit_mks_He_p2_Callback(hObject, eventdata, handles)
-val = str2double(get(handles.edit_mks_He_p2,'String'));
-if val > 5 || val < 0
-    set(handles.edit_mks_He_p2,'String',num2str(1,'%2d'));  
-end
-
-
-
 function         edit_srs_D2_p1_Callback(hObject, eventdata, handles)
 val = str2double(get(handles.edit_srs_D2_p1,'String'));
 if val > 5 || val < 0
@@ -949,17 +883,6 @@ if val > 5 || val < 0
     set(handles.edit_srs_HD_p2,'String',num2str(1,'%2d'));  
 end
 
-function         edit_srs_He_p1_Callback(hObject, eventdata, handles)
-val = str2double(get(handles.edit_srs_He_p1,'String'));
-if val > 5 || val < 0
-    set(handles.edit_srs_He_p1,'String',num2str(1,'%2d'));  
-end
-
-function         edit_srs_He_p2_Callback(hObject, eventdata, handles)
-val = str2double(get(handles.edit_srs_He_p2,'String'));
-if val > 5 || val < 0
-    set(handles.edit_srs_He_p2,'String',num2str(1,'%2d'));  
-end
 
 
 % F Final Fit =============================================================
@@ -1007,7 +930,6 @@ ChooseSRS = get(handles.radiobutton_ChooseSRS,'Value');
 
 Scale__D2 = get(handles.radiobutton_Scale__D2,'Value');
 Scale__HD = get(handles.radiobutton_Scale__HD,'Value');
-Scale__He = get(handles.radiobutton_Scale__He,'Value');
 
 if     ChooseMKS == 1
        data  = mks_data;
@@ -1033,7 +955,6 @@ xL  = 'Time [s]';
 yL  = 'Flux [ions/m^2/s]';
 tHD = 'HD Flux';
 tD2 = 'D2 Flux';
-tHe = 'He Flux';
 
 if     ChooseMKS && Scale__HD      
             set(handles.checkbox_HDfluxMKS,'Value',1);  
@@ -1045,11 +966,6 @@ elseif ChooseMKS && Scale__D2
             data.D2flux = (data.m4Pres-data.m4Back)*data.cal_D2;
             yy = data.D2flux;
             tL = tD2;
-elseif ChooseMKS && Scale__He            
-            set(handles.checkbox_HefluxMKS,'Value',1);
-            data.Heflux = (data.m_Pres-data.m_Back)*data.cal_He;
-            yy = data.Heflux;
-            tL = tHe;            
 elseif ChooseSRS && Scale__HD
             set(handles.checkbox_HDfluxSRS,'Value',1);
             data.HDflux = (data.m3Pres-data.m3Back)*data.cal_D2;
@@ -1060,11 +976,6 @@ elseif ChooseSRS && Scale__D2
             data.D2flux = (data.m4Pres-data.m4Back)*data.cal_D2;
             yy = data.D2flux;
             tL = tD2;
-elseif ChooseSRS && Scale__He
-            set(handles.checkbox_HefluxSRS,'Value',1);
-            data.Heflux = (data.m_Pres-data.m_Back)*data.cal_He;
-            yy = data.Heflux;
-            tL = tHe;            
 end
 
 LogPlot = get(handles.radiobutton__Log__Plot,'Value');
@@ -1095,7 +1006,6 @@ ChooseSRS = get(handles.radiobutton_ChooseSRS,'Value');
 
 Scale__D2 = get(handles.radiobutton_Scale__D2,'Value');
 Scale__HD = get(handles.radiobutton_Scale__HD,'Value');
-Scale__He = get(handles.radiobutton_Scale__He,'Value');
 
 if     ChooseMKS == 1
        data  = mks_data;
@@ -1131,7 +1041,7 @@ xL  = 'Temp [K]';
 yL  = 'Flux [ions/m^2/s]';
 tHD = 'HD Flux';
 tD2 = 'D2 Flux';
-tHe = 'He Flux';
+
 
 if     ChooseMKS && Scale__HD      
             set(handles.checkbox_HDfluxMKS,'Value',1);  
@@ -1143,14 +1053,6 @@ elseif ChooseMKS && Scale__D2
             data.D2flux = (data.m4Pres-data.m4Back)*data.cal_D2;
             yy = data.D2flux;
             tL = tD2;
-elseif ChooseMKS && Scale__He            
-            set(handles.checkbox_HefluxMKS,'Value',1);
-            data.Heflux = (data.m_Pres-data.m_Back)*data.cal_He;
-            nanSpan = ~isnan(data.Heflux(jSpan));
-            data.Hereten = trapz(data.dtList(jSpan(nanSpan)),data.Heflux(jSpan(nanSpan)));
-            yy = data.Heflux;
-            tHe= [tHe '(' num2str(data.Hereten,'%5.2e')  ')'];
-            tL = tHe;
 elseif ChooseSRS && Scale__HD
             set(handles.checkbox_HDfluxSRS,'Value',1);
             data.HDflux = (data.m3Pres-data.m3Back)*data.cal_D2;
@@ -1161,18 +1063,11 @@ elseif ChooseSRS && Scale__D2
             data.D2flux = (data.m4Pres-data.m4Back)*data.cal_D2;
             yy = data.D2flux;
             tL = tD2;
-elseif ChooseSRS && Scale__He
-            set(handles.checkbox_HefluxSRS,'Value',1);
-            data.Heflux = (data.m_Pres-data.m_Back)*data.cal_He;
-            nanSpan = ~isnan(data.Heflux(jSpan));
-            data.Hereten = trapz(data.dtList(jSpan(nanSpan)),data.Heflux(jSpan(nanSpan)));
-            yy = data.Heflux;
-            tHe= [tHe '(' num2str(data.Hereten,'%5.2e')  ')'];
-            tL = tHe;
 end
 
 LogPlot = get(handles.radiobutton__Log__Plot,'Value');
 plot_xx_yy_1(data.temptr(jSpan),yy(jSpan),tL,xL,yL,axFnl,LogPlot);
+
 
 D2fluxMKS = get(handles.checkbox_D2fluxMKS,'Value');
 HDfluxMKS = get(handles.checkbox_HDfluxMKS,'Value');
@@ -1212,8 +1107,7 @@ data.D2mult  = str2double(get(handles.edit_D2_mult,'String'));
 data.HDmult  = str2double(get(handles.edit_HD_mult,'String'));
 
 % multiply by correct factor and remove values below 0
-% data.D_flux = max(0,data.HDflux*data.HDmult) + max(0,data.D2flux*data.D2mult);
-data.D_flux = data.HDflux*data.HDmult + data.D2flux*data.D2mult;
+data.D_flux = max(0,data.HDflux*data.HDmult) + max(0,data.D2flux*data.D2mult);
 
 T_min = str2double(get(handles.edit_Temp_min,'String'));
 T_max = str2double(get(handles.edit_Temp_max,'String'));
@@ -1222,13 +1116,12 @@ jBgn = find(data.temptr>(T_min-7.5) & data.temptr<(T_min+7.5),1,'first');
 jEnd = find(data.temptr>(T_max-7.5) & data.temptr<(T_max+7.5),1,'first');
 jSpan = jBgn:jEnd;
 
+
 [RampRate,~] = fit_TempTime(data.dtList(jSpan),data.temptr(jSpan));
 set(handles.edit_RampRate,'String',num2str(RampRate,'%4.3f'));
 
 data.jSpan  = jSpan;
-% data.Dreten = sum(data.D_flux(jSpan).*(data.dtList(jSpan)-data.dtList(jSpan-1)));
-nanSpan = ~isnan(data.D_flux(jSpan));
-data.Dreten = trapz(data.dtList(jSpan(nanSpan)),data.D_flux(jSpan(nanSpan)));
+data.Dreten = sum(data.D_flux(jSpan).*(data.dtList(jSpan)-data.dtList(jSpan-1)));
 
 xL  = 'Temp [K]';
 yL  = 'Flux [ions/m^2/s]';
@@ -1294,15 +1187,12 @@ global mks_data
 data  = mks_data;
 jSpan = data.jSpan;
 
-Header1 = ['Temperatures Spanned = ' num2str(data.temptr(min(data.jSpan)),'%7.3f')...
-                              ' to ' num2str(data.temptr(max(data.jSpan)),'%7.3f') ' [K]'];
-Header2 = ['D  Retention = ' num2str(data.Dreten, '%8.4e') ' [ D/m^2]' ...
-           ' where D = ' num2str(data.D2mult,'%2g') ' x D2 + ' num2str(data.HDmult,'%2g') ' x HD'];
-Header3 = ['He Retention = ' num2str(data.Hereten,'%8.4e') ' [He/m^2]' ];
-
-Header4 = 'Time[s]     Temp[K]     [D/m^2/s]   [HD/m^2/s]  [D2/m^2/s]  [He/m^2/s]';
+Header1 = ['D Retention = ' num2str(data.Dreten,'%8.4e') ' [D/m^2]' ...
+           ' | Temperatures Spanned = ' num2str(data.temptr(min(data.jSpan)),'%7.3e')...
+                                 ' to ' num2str(data.temptr(max(data.jSpan)),'%7.3e') ];
+Header2 = 'Time[s]     Temp[K]     DFlux[D/m^2/s]   HDFlux[HD/m^2/s]   D2Flux[D2/m^2/s]';
 Values  = [data.dtList(jSpan),data.temptr(jSpan),data.D_flux(jSpan),...
-           data.HDflux(jSpan),data.D2flux(jSpan),data.Heflux(jSpan)];
+           data.HDflux(jSpan),data.D2flux(jSpan)];
 
 Var__MKS = get(handles.edit_Var__MKS,'String');
 fileName = [Var__MKS '.txt'];
@@ -1310,8 +1200,6 @@ fileName = [Var__MKS '.txt'];
 fid = fopen(fileName,'wt');
 fprintf(fid,[Header1 '\n']);
 fprintf(fid,[Header2 '\n']);
-fprintf(fid,[Header3 '\n']);
-fprintf(fid,[Header4 '\n']);
 fclose(fid);
 dlmwrite(fileName,Values, '-append','delimiter','\t','precision','%8.4e');
 
@@ -1321,15 +1209,12 @@ global srs_data
 data  = srs_data;
 jSpan = data.jSpan;
 
-Header1 = ['Temperatures Spanned = ' num2str(data.temptr(min(data.jSpan)),'%7.3f')...
-                              ' to ' num2str(data.temptr(max(data.jSpan)),'%7.3f') ' [K]'];
-Header2 = ['D  Retention = ' num2str(data.Dreten, '%8.4e') ' [ D/m^2]' ...
-           ' where D = ' num2str(data.D2mult,'%2g') ' x D2 + ' num2str(data.HDmult,'%2g') ' x HD'];
-Header3 = ['He Retention = ' num2str(data.Hereten,'%8.4e') ' [He/m^2]' ];
-
-Header4 = 'Time[s]     Temp[K]     [D/m^2/s]   [HD/m^2/s]  [D2/m^2/s]  [He/m^2/s]';
+Header1 = ['D Retention = ' num2str(data.Dreten,'%8.4e') ' [D/m^2]' ...
+           ' | Temperatures Spanned = ' num2str(data.temptr(min(data.jSpan)),'%7.3e')...
+                                 ' to ' num2str(data.temptr(max(data.jSpan)),'%7.3e') ];
+Header2 = 'Time[s]     Temp[K]     DFlux[D/m^2/s]   HDFlux[HD/m^2/s]   D2Flux[D2/m^2/s]';
 Values  = [data.dtList(jSpan),data.temptr(jSpan),data.D_flux(jSpan),...
-           data.HDflux(jSpan),data.D2flux(jSpan),data.Heflux(jSpan)];
+           data.HDflux(jSpan),data.D2flux(jSpan)];
 
 Var__SRS = get(handles.edit_Var__SRS,'String');
 fileName = [Var__SRS '.txt'];
@@ -1337,14 +1222,13 @@ fileName = [Var__SRS '.txt'];
 fid = fopen(fileName,'wt');
 fprintf(fid,[Header1 '\n']);
 fprintf(fid,[Header2 '\n']);
-fprintf(fid,[Header3 '\n']);
-fprintf(fid,[Header4 '\n']);
 fclose(fid);
 dlmwrite(fileName,Values, '-append','delimiter','\t','precision','%8.4e');
 
 
 
 %% ========================= END GUI Functions ============================ 
+
 
 
 
@@ -2206,10 +2090,6 @@ elseif strcmp(titlePlot,'HD')
          plot(data.dtList,log10(data.m2Pres),'r*',...
               data.dtList,log10(data.m3Pres),'b*',...
               'LineWidth',2.0);
-elseif strcmp(titlePlot,'He')
-         plot(data.dtList,log10(data.m2Pres),'r*',...
-              data.dtList,log10(data.m_Pres),'g*',...
-              'LineWidth',2.0);
 elseif strcmp(titlePlot,'MKS Error')
          plot(data.dtList,log10(data.m2Wght),'r*',...
               data.dtList,log10(data.m3Wght),'b*',...
@@ -2320,13 +2200,5 @@ box on
 
 
 %% END of TDS GUI Subroutines =============================================
-
-
-
-
-
-
-
-
 
 
